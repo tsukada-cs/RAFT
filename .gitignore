@@ -6,5 +6,4 @@ pytorch_env
 models
 build
 correlation.egg-info
-my-frames
-demo-results
+projects
