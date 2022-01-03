@@ -79,12 +79,12 @@ class SmallMotionEncoder(nn.Module):
 class BasicMotionEncoder(nn.Module):
     def __init__(self, args):
         super(BasicMotionEncoder, self).__init__()
-        cor_planes = args.corr_levels * (2*args.corr_radius + 1)**2
-        self.convc1 = nn.Conv2d(cor_planes, 256, 1, padding=0)
-        self.convc2 = nn.Conv2d(256, 192, 3, padding=1)
-        self.convf1 = nn.Conv2d(2, 128, 7, padding=3)
-        self.convf2 = nn.Conv2d(128, 64, 3, padding=1)
-        self.conv = nn.Conv2d(64+192, 128-2, 3, padding=1)
+        cor_planes = args.corr_levels * (2*args.corr_radius + 1)**2 # raft-things.pth では level=4, radius=4 のため計算結果は 324
+        self.convc1 = nn.Conv2d(cor_planes, 256, 1, padding=0) # ksize=1 for corr
+        self.convc2 = nn.Conv2d(256, 192, 3, padding=1) # ksize=3 for corr
+        self.convf1 = nn.Conv2d(2, 128, 7, padding=3) # ksize=7 for flow
+        self.convf2 = nn.Conv2d(128, 64, 3, padding=1) # ksize=3 for flow
+        self.conv = nn.Conv2d(64+192, 128-2, 3, padding=1) # ksize=3 for corr & flow
 
     def forward(self, flow, corr):
         cor = F.relu(self.convc1(corr))

@@ -121,16 +121,16 @@ class BasicEncoder(nn.Module):
         self.norm_fn = norm_fn
 
         if self.norm_fn == 'group':
-            self.norm1 = nn.GroupNorm(num_groups=8, num_channels=64)
+            self.norm1 = nn.GroupNorm(num_groups=8, num_channels=64) # チャンネルをG個のグループに分けてバッチ毎・グループ毎に正規化
             
         elif self.norm_fn == 'batch':
-            self.norm1 = nn.BatchNorm2d(64)
+            self.norm1 = nn.BatchNorm2d(64) # 各チャンネル毎にで平均0・分散1となるように正規化
 
         elif self.norm_fn == 'instance':
-            self.norm1 = nn.InstanceNorm2d(64)
+            self.norm1 = nn.InstanceNorm2d(64) # 各特徴量マップ内で平均0・分散1となるように正規化
 
         elif self.norm_fn == 'none':
-            self.norm1 = nn.Sequential()
+            self.norm1 = nn.Sequential() #正規化しない
 
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3)
         self.relu1 = nn.ReLU(inplace=True)
@@ -147,16 +147,20 @@ class BasicEncoder(nn.Module):
         if dropout > 0:
             self.dropout = nn.Dropout2d(p=dropout)
 
-        for m in self.modules():
+        for m in self.modules(): #上で定義した module を順番に m に代入する
             if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu') # Conv2d には Heの初期値を用いる
             elif isinstance(m, (nn.BatchNorm2d, nn.InstanceNorm2d, nn.GroupNorm)):
                 if m.weight is not None:
-                    nn.init.constant_(m.weight, 1)
+                    nn.init.constant_(m.weight, 1) # Norm関係は 重み１, バイアス０ で初期化する
                 if m.bias is not None:
                     nn.init.constant_(m.bias, 0)
 
     def _make_layer(self, dim, stride=1):
+        """
+        Residual Block を２つ繋げたlayerのnn.Sequentialを返す。
+        形状は[self.in_planes, dim]と[dim, dim]で, 最後には self.in_planes も dim に更新する。
+        """
         layer1 = ResidualBlock(self.in_planes, dim, self.norm_fn, stride=stride)
         layer2 = ResidualBlock(dim, dim, self.norm_fn, stride=1)
         layers = (layer1, layer2)
@@ -184,7 +188,7 @@ class BasicEncoder(nn.Module):
         x = self.conv2(x)
 
         if self.training and self.dropout is not None:
-            x = self.dropout(x)
+            x = self.dropout(x) # 確率 x で重みを 0 にする
 
         if is_list:
             x = torch.split(x, [batch_dim, batch_dim], dim=0)

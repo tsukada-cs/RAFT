@@ -23,10 +23,14 @@ class CorrBlock:
         
         self.corr_pyramid.append(corr)
         for i in range(self.num_levels-1):
-            corr = F.avg_pool2d(corr, 2, stride=2)
+            corr = F.avg_pool2d(corr, 2, stride=2) # corr を平均 pooling していく
             self.corr_pyramid.append(corr)
 
     def __call__(self, coords):
+        """
+        与えられた座標(coords)に対応する corr pyramid を返す。
+        各レベルにはバイリニア補間で得た半径 self.r 以内のcorrが含まれる。
+        """
         r = self.radius
         coords = coords.permute(0, 2, 3, 1)
         batch, h1, w1, _ = coords.shape
@@ -67,7 +71,7 @@ class AlternateCorrBlock:
 
         self.pyramid = [(fmap1, fmap2)]
         for i in range(self.num_levels):
-            fmap1 = F.avg_pool2d(fmap1, 2, stride=2)
+            fmap1 = F.avg_pool2d(fmap1, 2, stride=2) # 使わないので無駄な計算だと思われる
             fmap2 = F.avg_pool2d(fmap2, 2, stride=2)
             self.pyramid.append((fmap1, fmap2))
 
