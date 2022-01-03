@@ -1,7 +1,7 @@
 #%%
 import os
 import sys
-sys.path.append('/Users/git/RAFT/core')
+sys.path.append('/Users/tsukada/git/RAFT/core')
 import argparse
 
 import cv2
@@ -23,7 +23,7 @@ def create_img(x, y, r, color=(0,0,0)):
     return img
 
 for t in range(5):
-    img = create_img(10*t**2+20, 10*t**2+20, 10, color=(150,20,150))
+    img = create_img(10*t**2+20, 5*t**2+20, 10, color=(150,20,150))
     img[25:175, 90:110, :] = 100
     cv2.imwrite(f'projects/test_project/frames/test_t{t}.png', img)
     plt.imshow(img)
@@ -84,6 +84,7 @@ def demo(args):
                  glob.glob(os.path.join(args.path, '*.jpg'))
         
         images = sorted(images)
+        flow_nc_names = [""]*len(images)
         for i, (imfile1, imfile2) in enumerate(zip(images[:-1], images[1:])):
             image1 = load_image(imfile1)
             image2 = load_image(imfile2)
@@ -91,9 +92,14 @@ def demo(args):
             padder = InputPadder(image1.shape)
             image1, image2 = padder.pad(image1, image2)
 
-            _, flow_up = model(image1, image2, iters=20, test_mode=True)
-            flow_to_netcdf(flow_up, uv_datadir+"/"+os.path.basename(imfile1).replace(".png",".nc").replace(".jpg",".nc"))
-        return imgs, flows
+            if args.warm_start and i > 0:
+                flow_low, flow_up = model(image1, image2, iters=20, test_mode=True, flow_init=flow_low)
+            else:
+                flow_low, flow_up = model(image1, image2, iters=20, test_mode=True)
+            flow_nc_name = uv_datadir+"/"+os.path.basename(imfile1).replace(".png",".nc").replace(".jpg",".nc")
+            flow_nc_names[i] = flow_nc_name
+            flow_to_netcdf(flow_up, flow_nc_name)
+        return images, flow_nc_names
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', help="restore checkpoint")
@@ -102,27 +108,26 @@ parser.add_argument('--project', help="project directory")
 parser.add_argument('--small', action='store_true', help='use small model')
 parser.add_argument('--mixed_precision', action='store_true', help='use mixed precision')
 parser.add_argument('--alternate_corr', action='store_true', help='use efficent correlation implementation')
+parser.add_argument('--warm_start', action='store_true', help='use previous flow as next step initial flow')
 args = parser.parse_args([
     '--model', 'models/raft-things.pth',
     '--path', 'projects/202010_Haishen/frames',
-    '--project', 'projects/202010_Haishen'
+    '--project', 'projects/202010_Haishen',
+    '--warm_start',
     ])
 #%%
 imgs, flows = demo(args)
 
 #%%
 i = 0
-image_fnames = glob.glob(os.path.join(args.path, '*.png')) + \
-                glob.glob(os.path.join(args.path, '*.jpg'))
-image_fnames = sorted(image_fnames)
-img = load_image(image_fnames[i])
+img = load_image(imgs[i])
 img = img[0].permute(1,2,0).cpu().numpy()
 
-flow = xr.open_dataset(f"{args.project}/results/raft-things/uv/{os.path.basename(image_fnames[i]).replace('png','nc')}")
+flow = xr.open_dataset(flows[i])
 u, v = flow.u.values, flow.v.values
 
 fig, ax = plt.subplots(figsize=(8,8))
-mabiki = 10
+mabiki = 8
 u_view = u[::mabiki,::mabiki]
 v_view = v[::mabiki,::mabiki]
 velocity = np.hypot(u_view, v_view)
@@ -132,11 +137,16 @@ ax.imshow(img/255.0, origin="upper")
 ax.quiver(xx[::mabiki,::mabiki], yy[::mabiki,::mabiki], u_view, v_view, velocity, scale=img.shape[0], cmap="jet")
 ax.axis("off")
 ax.set(aspect="equal")
+
+out_dir = f"{args.project}/results/{os.path.basename(args.model).split('.')[0]}/flow_viz"
+os.makedirs(out_dir, exist_ok=True)
+fig.savefig(f"{out_dir}/flow_{os.path.basename(imgs[i])}", bbox_inches="tight", pad_inches=0, dpi=200)
 # %%
 fig, ax = plt.subplots(1, 2, figsize=(8,8))
-ax[0].imshow(np.hypot(u, v), cmap="jet")
-ax[1].imshow(np.arctan2(v, u), cmap="jet")
+velocities = np.hypot(u, v)
+ax[0].imshow(velocities, cmap="jet")
+directions = np.arctan2(v, u)
+directions[velocities < 1] = 0
+ax[1].imshow(directions, cmap="jet")
 
-# %%
-# %%
 # %%
