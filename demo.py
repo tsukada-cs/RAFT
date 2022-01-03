@@ -1,5 +1,5 @@
 import sys
-sys.path.append('core')
+sys.path.append('/Users/tsukada/git/RAFT/core')
 
 import argparse
 import os
@@ -34,12 +34,12 @@ def viz(img, flo, fname="flow.png"):
     # img_flo = np.concatenate([img, flo], axis=1)
 
     import matplotlib.pyplot as plt
-    fig, ax = plt.subplots(nrows=1, ncols=2)
+    fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(10,5))
     ax[0].imshow(img / 255.0)
     ax[1].imshow(flo / 255.0)
     ax[0].axis("off")
     ax[1].axis("off")
-    fig.savefig(fname, bbox_inches="tight", pad_inches=0.1, dpi=144,)
+    fig.savefig(fname, bbox_inches="tight", pad_inches=0.1, dpi=300)
     plt.close()
 
     # cv2.imshow('image', img_flo[:, :, [2,1,0]]/255.0)
@@ -69,7 +69,7 @@ def demo(args):
 
             flow_low, flow_up = model(image1, image2, iters=20, test_mode=True)
             viz(image1, flow_up, fname="demo-results/flo_"+os.path.basename(imfile1)+".png")
-
+            return
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
