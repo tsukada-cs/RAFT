@@ -1,4 +1,7 @@
-2021-12-31
-    ・conda環境 raft を Mac に作成。cudatoolkit=10.1 が要求されているが，Mac 版は9.0が最新のため，それをインストールした。
-    ・VScodeのTensorBoard拡張を使うため，VScode内で次のコマンドが実行された：conda install -c conda-forge --name tc tensorboard -y
-    ・
+[2021-12-31]
+・conda環境 raft を Mac に作成。cudatoolkit=10.1 が要求されているが，Mac 版は9.0が最新のため，それをインストールした。
+・VScodeのTensorBoard拡張を使うため，VScode内で次のコマンドが実行された：conda install -c conda-forge --name tc tensorboard -y
+
+
+[2022-02-16]
+・coreをraftに改名し、setup.pyを追加。インストールを可能に。
