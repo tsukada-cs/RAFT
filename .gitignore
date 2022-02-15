@@ -9,3 +9,4 @@ correlation.egg-info
 projects
 etc/*.png
 demo-results
+.vscode
