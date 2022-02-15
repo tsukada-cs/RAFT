@@ -121,7 +121,6 @@ class RAFT(nn.Module):
         for itr in range(iters):
             coords1 = coords1.detach() # 計算グラフを切る。これにより coords1 の重みの勾配は計算されない
             corr = corr_fn(coords1) # index correlation volume
-
             flow = coords1 - coords0 # 1/8 resolutions
             with autocast(enabled=self.args.mixed_precision):
                 net, up_mask, delta_flow = self.update_block(net, inp, corr, flow)

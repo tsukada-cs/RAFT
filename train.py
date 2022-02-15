@@ -145,7 +145,7 @@ def train(args):
     model.train()
 
     if args.stage != 'chairs':
-        model.module.freeze_bn()
+        model.module.freeze_bn() # BatchNorm2d だけは model.eval() で検証モードにする
 
     train_loader = datasets.fetch_dataloader(args)
     optimizer, scheduler = fetch_optimizer(args, model)

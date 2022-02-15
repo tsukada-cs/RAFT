@@ -20,7 +20,6 @@ class CorrBlock:
 
         batch, h1, w1, dim, h2, w2 = corr.shape
         corr = corr.reshape(batch*h1*w1, dim, h2, w2)
-        
         self.corr_pyramid.append(corr)
         for i in range(self.num_levels-1):
             corr = F.avg_pool2d(corr, 2, stride=2) # corr を平均 pooling していく
@@ -58,7 +57,6 @@ class CorrBlock:
         batch, dim, ht, wd = fmap1.shape
         fmap1 = fmap1.view(batch, dim, ht*wd)
         fmap2 = fmap2.view(batch, dim, ht*wd) 
-        
         corr = torch.matmul(fmap1.transpose(1,2), fmap2)
         corr = corr.view(batch, ht, wd, 1, ht, wd)
         return corr  / torch.sqrt(torch.tensor(dim).float())
@@ -69,9 +67,9 @@ class AlternateCorrBlock:
         self.num_levels = num_levels
         self.radius = radius
 
-        self.pyramid = [(fmap1, fmap2)]
+        self.pyramid = [(fmap1, fmap2)] # self.pyramid[0] に対応
         for i in range(self.num_levels):
-            fmap1 = F.avg_pool2d(fmap1, 2, stride=2) # 使わないので無駄な計算だと思われる
+            fmap1 = F.avg_pool2d(fmap1, 2, stride=2) # self.pyramid[0][0] しか使わないので無駄な計算だと思われる
             fmap2 = F.avg_pool2d(fmap2, 2, stride=2)
             self.pyramid.append((fmap1, fmap2))
 

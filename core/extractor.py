@@ -132,16 +132,16 @@ class BasicEncoder(nn.Module):
         elif self.norm_fn == 'none':
             self.norm1 = nn.Sequential() #正規化しない
 
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3)
+        self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3) # このレイヤーで1/2
         self.relu1 = nn.ReLU(inplace=True)
 
         self.in_planes = 64
-        self.layer1 = self._make_layer(64,  stride=1)
-        self.layer2 = self._make_layer(96, stride=2)
-        self.layer3 = self._make_layer(128, stride=2)
+        self.layer1 = self._make_layer(64, stride=1)
+        self.layer2 = self._make_layer(96, stride=2) # このレイヤーで1/4
+        self.layer3 = self._make_layer(128, stride=2) # このレイヤーで1/8
 
         # output convolution
-        self.conv2 = nn.Conv2d(128, output_dim, kernel_size=1)
+        self.conv2 = nn.Conv2d(128, output_dim, kernel_size=1) # このレイヤーで出力を256にする
 
         self.dropout = None
         if dropout > 0:

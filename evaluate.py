@@ -52,7 +52,7 @@ def create_sintel_submission(model, iters=32, warm_start=False, output_path='sin
 
 @torch.no_grad()
 def create_kitti_submission(model, iters=24, output_path='kitti_submission'):
-    """ Create submission for the Sintel leaderboard """
+    """ Create submission for the KITTI leaderboard """
     model.eval()
     test_dataset = datasets.KITTI(split='testing', aug_params=None)
 
