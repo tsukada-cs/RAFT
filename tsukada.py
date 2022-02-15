@@ -1,7 +1,5 @@
 #%%
 import os
-import sys
-sys.path.append('/Users/tsukada/git/RAFT/core')
 import argparse
 
 import cv2
@@ -13,11 +11,16 @@ from PIL import Image
 import matplotlib.pyplot as plt
 
 from raft import RAFT
-from utils import flow_viz
-from utils.utils import InputPadder
+from raft.utils import flow_viz
+from raft.utils.utils import InputPadder
 
+%load_ext autoreload
+%autoreload 2
 
 def create_img(x, y, r, color=(0,0,0)):
+    """
+    color は BGR で指定
+    """
     img = np.full([200,200,3], 255, np.uint8)
     cv2.circle(img, (x, y), r, color, thickness=-1)
     return img
@@ -28,6 +31,7 @@ for t in range(5):
     cv2.imwrite(f'projects/test_project/frames/test_t{t}.png', img)
     plt.imshow(img)
     plt.show()
+
 #%%
 DEVICE = 'cpu'
 
@@ -90,7 +94,7 @@ def demo(args):
             image2 = load_image(imfile2)
 
             padder = InputPadder(image1.shape)
-            image1, image2 = padder.pad(image1, image2)
+            image1, image2 = padder.pad(image1, image2) # 8の倍数になるよう padding
 
             if args.warm_start and i > 0:
                 flow_low, flow_up = model(image1, image2, iters=20, test_mode=True, flow_init=flow_low)
@@ -111,15 +115,15 @@ parser.add_argument('--alternate_corr', action='store_true', help='use efficent 
 parser.add_argument('--warm_start', action='store_true', help='use previous flow as next step initial flow')
 args = parser.parse_args([
     '--model', 'models/raft-things.pth',
-    '--path', 'projects/202010_Haishen/frames',
-    '--project', 'projects/202010_Haishen',
+    '--path', '/Users/tsukada/git/RAFT/projects/test_project/frames',
+    '--project', '/Users/tsukada/git/RAFT/projects/test_project',
     '--warm_start',
     ])
 #%%
 imgs, flows = demo(args)
 
-#%%
-i = 0
+#%%　流れの可視化
+i = 3
 img = load_image(imgs[i])
 img = img[0].permute(1,2,0).cpu().numpy()
 
@@ -127,7 +131,7 @@ flow = xr.open_dataset(flows[i])
 u, v = flow.u.values, flow.v.values
 
 fig, ax = plt.subplots(figsize=(8,8))
-mabiki = 8
+mabiki = 4
 u_view = u[::mabiki,::mabiki]
 v_view = v[::mabiki,::mabiki]
 velocity = np.hypot(u_view, v_view)
